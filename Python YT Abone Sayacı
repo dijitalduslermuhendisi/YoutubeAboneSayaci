@@ -1,0 +1,40 @@
+from googleapiclient.discovery import build
+import serial
+import time
+
+# YouTube API anahtarları
+API_KEY = "YOUR_API_KEY"
+CHANNEL_ID = "YOUR_CHANNEL_ID"
+
+# YouTube API'sını oluştur
+youtube = build('youtube', 'v3', developerKey=API_KEY)
+
+# Kanal bilgilerini al
+def get_channel_info():
+    request = youtube.channels().list(
+        part="statistics",
+        id=CHANNEL_ID
+    )
+    response = request.execute()
+    return response['items'][0]['statistics']['subscriberCount']
+
+# Arduino'ya bağlı portu belirle
+ser = serial.Serial('COM6', 9600, timeout=1)
+
+while True:
+    try:
+        # Kanalın abone sayısını al
+        subscriber_count = get_channel_info()
+        
+        # Arduino'ya abone sayısını gönder
+        ser.write(str(subscriber_count).encode())
+        
+        # 5 saniyede bir güncelleme yap
+        time.sleep(5)
+    
+    except KeyboardInterrupt:
+        print("Program kapatıldı")
+        break
+
+# Seri bağlantıyı kapat
+ser.close()
